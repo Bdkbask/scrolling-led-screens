@@ -7,6 +7,8 @@ An ESP32-powered scrolling LED display project featuring 3 custom-built 900 LED 
 ## 🚀 Project Overview
 This project uses **WS2812B addressable LED strips** to create a large-scale display. It is designed to handle high-density animations and scrolling text. To meet the massive power demands of 900 LEDs (up to 20 Amps), it utilizes a modified computer ATX power supply.
 
+## 📹 Demo
+![LED Screen Demo](assets/video_screen_scrolling.gif)
 ## 🛠 Hardware Components (Per Screen)
 * **Microcontroller:** ESP32-WROOM-DevKitC.
 * **LED Strips:** 30x WS2812B strips (30 LEDs per strip, totaling 900 pixels). (Recommended: 5V, 60 LEDs/meter).
