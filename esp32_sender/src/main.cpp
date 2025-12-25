@@ -17,7 +17,6 @@ String colorServer = "http://"+ server_ip + ":5000/color";
 String setupColorServer = "http://"+ server_ip + ":5000/firstColor";
 
 
-#include <Adafruit_NeoPixel.h>
 
 #define BROCHE        26 
 #define FRAME_WIDTH  30
@@ -25,7 +24,6 @@ String setupColorServer = "http://"+ server_ip + ":5000/firstColor";
 #define NB_SCREEN 3
 #define TOTAL_PIXELS FRAME_WIDTH*FRAME_HEIGHT 
 
-Adafruit_NeoPixel pixels(TOTAL_PIXELS, BROCHE, NEO_GRB + NEO_KHZ800);
 CRGB leds[TOTAL_PIXELS];
 
 
@@ -222,16 +220,10 @@ std::vector<String> getTextToWrite(String texte) {
       pixelMap.push_back(tmpCharPixelMap);
     } 
   }
-  // for (uint i = 0; i < pixelMap.size(); i++) {
-  //   Serial.println(pixelMap[i]);
-  // }
+
   return pixelMap;
 }
 
-
-std::vector<byte> revertLine(std::vector<byte> lineInput) {
-  return lineInput;
-}
 
 std::vector<std::vector<byte>> fillToFitScreen(std::vector<std::vector<byte>> textPixelArray) {
   uint currentHeight = textPixelArray.size();
@@ -260,9 +252,6 @@ std::vector<std::vector<byte>> getByteMapForTextVector(std::vector<String> textC
 
   std::vector<std::vector<byte>> finalByteMapText;
   for (uint i = 0; i < textCharVector.size(); i++){
-    // Serial.println(textCharVector[i].substring(3,5).toInt());
-    // Serial.println(textCharVector[i].toInt());
-
     textWidth +=  textCharVector[i].toInt();
     if (textCharVector[i].substring(3,5).toInt() > textHeight) textHeight = textCharVector[i].substring(3,5).toInt();
   }
@@ -280,19 +269,11 @@ std::vector<std::vector<byte>> getByteMapForTextVector(std::vector<String> textC
         }
       }
     }
-    if (!currentHeightIndex%2) {
-      currentLine = revertLine(currentLine); // NON IMPLEMENTE ENCORE A VOIR SI UTILE
-    }
     finalByteMapText.push_back(currentLine);
   }
 
   finalByteMapText = fillToFitScreen(finalByteMapText);
-  // for(int i = 0; i < finalByteMapText.size(); i++) {
-  //   for(int j = 0; j < finalByteMapText[0].size(); j++) {
-  //     Serial.print(finalByteMapText[i][j]);
-  //   }
-  //   Serial.println("");
-  // }
+
 
 
   return finalByteMapText;
@@ -322,58 +303,35 @@ std::vector<std::vector<std::vector<byte>>> calculatePixelsPerScreen(std::vector
     }
   }
 
-  // for (uint currentScreen = 0; currentScreen < NB_SCREEN; currentScreen++) {
-  //   Serial.println("Screen " + String(currentScreen) + " :");
-  //   for (uint h = 0; h < byteMapPerScreen[currentScreen].size(); h++) {
-  //     for (uint w = 0; w < byteMapPerScreen[currentScreen][h].size(); w++) {
-  //       Serial.print(byteMapPerScreen[currentScreen][h][w]);
-  //     }
-  //     Serial.println("");
-  //   }
-  // }
 
   return byteMapPerScreen;
 }
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   lastStatus = status;
-  // Serial.println(lastStatus);
-  transmitComplete = true; // Signals the main loop to proceed
-  // Serial.println("Callback happened");
+  transmitComplete = true; 
 }
 
-// Example of sending a single chunk and waiting
 bool sendChunkAndWait(const uint8_t *peer_addr, const uint8_t *data, size_t len) {
-    transmitComplete = false; // Reset the flag before sending
-    lastStatus = ESP_NOW_SEND_SUCCESS; // Reset status
+    transmitComplete = false; 
+    lastStatus = ESP_NOW_SEND_SUCCESS; 
 
     esp_err_t result = esp_now_send(peer_addr, data, len);
 
     if (result != ESP_OK) {
-        // Failed to even put the packet in the buffer (e.g., buffer full)
         Serial.println("Error: Failed to queue packet ESP.");
         return false;
     }
 
-    // *** WAITING LOOP ***
-    // This is where you "wait" for the asynchronous callback.
-    // Use a timeout to prevent infinite blocking if the callback never fires.
     unsigned long startTime = millis();
-    // Serial.println("Waiting for callback...");
-    // Serial.println("Laststatus before wait : " + lastStatus);
-    while (!transmitComplete && (millis() - startTime < 15)) { // Wait up to 50ms
-        // Do nothing (or handle low priority tasks)
+
+    while (!transmitComplete && (millis() - startTime < 15)) { 
         yield(); 
     }
-    
-    // Check if the callback fired successfully
-
-    // Serial.printf("Fin attente. Complete: %d, Status: %d\n", transmitComplete, lastStatus);
     
     if (transmitComplete && lastStatus == ESP_NOW_SEND_SUCCESS) {
         return true; // Chunk confirmed received by peer
     } else {
-        // Serial.println("Error: Chunk failed or timed out.");
         return false; // Failed or timeout
     }
 }
@@ -464,19 +422,15 @@ void setup() {
       0);                // Numéro de Core (0)
 
   
-  // 1. Initialisation de FastLED
     FastLED.addLeds<WS2812B, BROCHE, GRB>(leds, TOTAL_PIXELS); 
 
-    // 2. Définition de la luminosité (fonction standard de FastLED)
     FastLED.setBrightness(20); 
 
-    // 3. Affichage (éteint)
     FastLED.show();
 }
 
 
 void sendData(int screenIndex, std::vector<std::vector<byte>> dataToSend) {
-  // Convertir les données en un tableau d'octets
   uint part = 0;
   uint nbRowSent = 0;
   struct_message toSend;
@@ -499,8 +453,6 @@ void sendData(int screenIndex, std::vector<std::vector<byte>> dataToSend) {
       toSend.nbRows = nbRowSent;
       while (!sendChunkAndWait(broadcastAddress[screenIndex-1], (uint8_t *) &toSend, sizeof(toSend))) {
 
-        // Serial.println("Retrying...");
-        // Serial.println("New index : " + String(toSend.index));
         delay(10);
       }
       nbRowSent = 0;
@@ -508,11 +460,6 @@ void sendData(int screenIndex, std::vector<std::vector<byte>> dataToSend) {
     }
   }
 
-  //display the data to send
-  // for (size_t i = 0; i < byteArray.size(); i++) {
-  //   Serial.print(byteArray[i]);
-  // }
-  // Serial.println();
   for (const auto& val : byteArray) {
     toSend.pixels[&val - &byteArray[0]] = val;
   }
@@ -550,100 +497,52 @@ void sendOkToEveryone(){
   }
 }
 
-// void calculate_image(const std::vector<std::vector<byte>>& dataToDisplay) {
-//   pixels.fill(pixels.Color(0,0,0));
-//   uint8_t assembledScreen[TOTAL_PIXELS];
-//   size_t currentOffset = 0; // Index de destination dans assembledScreen
-
-//     // Boucle sur les lignes du double vecteur
-//   for (const auto& row : dataToDisplay) {   
-//       size_t rowSize = row.size(); 
-//       if (currentOffset + rowSize <= TOTAL_PIXELS) {
-//           memcpy(assembledScreen + currentOffset,
-//                   row.data(),                     
-//                   rowSize);                        
-          
-//           currentOffset += rowSize;
-//       } else {
-//         break; 
-//       }
-//   }
-//   for(int i=0; i<TOTAL_PIXELS; i++) { // Les pixels sont numÃ©rotÃ©s de 0 Ã  ...
-//     if (assembledScreen[i] == 1) {  
-//       uint pixel_to_light = 0;
-//       uint row = i / FRAME_WIDTH;
-
-//       if (row%2 == 1) {
-//         pixel_to_light = i;
-//       } else {
-//         pixel_to_light = FRAME_WIDTH*(row+1) - (i - (row*FRAME_WIDTH))-1;
-//       }
-
-//       pixels.setPixelColor(pixel_to_light, pixels.Color(colorToDisplay[0], colorToDisplay[1], colorToDisplay[2]));
-//       //delay(5);
-//     }
-//   }
-//   pixels.show();    
-// }
-
-
-// Le buffer 'leds' est globalement accessible
-// CRGB leds[TOTAL_PIXELS];
 
 void calculate_image(const std::vector<std::vector<byte>>& dataToDisplay) {
     
-    // Définir les couleurs une fois pour l'efficacité
     const CRGB activeColor(colorToDisplay[0], colorToDisplay[1], colorToDisplay[2]);
     const CRGB offColor(0, 0, 0);
 
     for (int y = 0; y < FRAME_HEIGHT; y++) {
         for (int x = 0; x < FRAME_WIDTH; x++) {
-            int i; // index final dans le buffer
+            int i; 
 
-            // 1. Calcul du mapping en serpent (Logique inchangée)
             if (y % 2 == 0) {
-                // Rangées paires : de DROITE à GAUCHE
                 i = y * FRAME_WIDTH + (FRAME_WIDTH - 1 - x);
             } else {
-                // Rangées impaires : de GAUCHE à DROITE
                 i = y * FRAME_WIDTH + x;
             }
 
-            // 2. Écriture directe dans le buffer FastLED
             leds[i] = dataToDisplay[y][x] ? activeColor : offColor;
         }
     }
 
-    // 3. Envoi DMA/RMT/I2S (Bloquant, mais rapide sur ESP32)
     FastLED.show(); 
-    
-    // NOTE: FastLED utilise nativement le RMT ou I2S pour l'ESP32, assurant 
-    // des performances maximales et une gestion efficace du buffer.
 }
 
 
 
 void loop() {
   //calculate millis for each action in loop 
-  long startMillis = millis();
+  // long startMillis = millis();
   std::vector<std::vector<std::vector<byte>>> dataToSend = calculatePixelsPerScreen(textPixelArray);
-  long currentMillis1 = millis();
-  Serial.println("Sending data...");
+  // long currentMillis1 = millis();
+  // Serial.println("Sending data...");
   sendData(1, dataToSend[1]);
-  long currentMillis2 = millis();
+  // long currentMillis2 = millis();
   sendData(2, dataToSend[2]);
-  long currentMillis3 = millis();
-  // sendOkToEveryone();
+  // long currentMillis3 = millis();
+  // sendOkToEveryone();        // to be developed on receiver side to adjust timing
   calculate_image(dataToSend[0]);
-  long currentMillis4 = millis();
+  // long currentMillis4 = millis();
 
   slideLeft();
-  long endMillis = millis();
-  Serial.println("Time taken (ms):");
-  Serial.println(" - Calculate screens : " + String(currentMillis1 - startMillis));
-  Serial.println(" - Send screen 1     : " + String(currentMillis2 - currentMillis1));
-  Serial.println(" - Send screen 2     : " + String(currentMillis3 - currentMillis2));
-  Serial.println(" - Display screen 0  : " + String(currentMillis4 - currentMillis3));
-  Serial.println(" - Slide Left        : " + String(endMillis - currentMillis4));
+  // long endMillis = millis();
+  // Serial.println("Time taken (ms):");
+  // Serial.println(" - Calculate screens : " + String(currentMillis1 - startMillis));
+  // Serial.println(" - Send screen 1     : " + String(currentMillis2 - currentMillis1));
+  // Serial.println(" - Send screen 2     : " + String(currentMillis3 - currentMillis2));
+  // Serial.println(" - Display screen 0  : " + String(currentMillis4 - currentMillis3));
+  // Serial.println(" - Slide Left        : " + String(endMillis - currentMillis4));
 
 }

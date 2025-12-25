@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<form method="POST" action="/">
+    <label for="texte_a_afficher">Texte à afficher :</label>
+    <input type="text" id="texte_a_afficher" name="message" required placeholder="Nouveau texte ...">
+    
+    <button type="submit">Envoyer</button>
+</form>
+
+<form method="POST" action="/">
+    <label for="colorPicker">Choisir une couleur :</label>
+    <input type="color" id="colorPicker" name="color" value="{{ current_color }}">
+    
+    <button type="submit">Changer la couleur</button>
+</form>
