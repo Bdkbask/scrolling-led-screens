@@ -31,7 +31,11 @@ The system relies on a combination of standard WiFi (Server to Sender) and ESP-N
 * **Libraries:** `FastLED`, `ESPAsyncWebServer`, and `ESPNOW`.
 
 ## ⚙️ Installation and Setup
-1. **Hardware Assembly:** Connect LED strips to the ESP32 and power supply.
+1. **Hardware Assembly:** Connect LED strips to the ESP32 and power supply according to the schematic  
+   [here](assets/schematic_global.kicad_prl). for kicad_prl  
+   [here](assets/schematic_global.kicad_pro). for kicad_pro  
+   [here](assets/schematic_global.kicad_sch). for kicad_sch  
+
 2. **Software Upload:** Flash the sender and receiver code using PlatformIO or Arduino IDE.
 3. **Network Config:** * Set your WiFi SSID and Password in the Sender code.
     * **Ensure you are connecting to a 2.4GHz channel.**
