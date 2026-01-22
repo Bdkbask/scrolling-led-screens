@@ -45,10 +45,8 @@ uint8_t colorToDisplay[3] = {255, 0, 255}; // Default color is purple
 std::vector<std::vector<byte>> textPixelArray;
 
 typedef struct struct_message {
-  uint8_t index;
-  uint8_t nbRows;
   uint8_t color[3];
-  byte pixels[8*30];
+  byte pixelsAsBytes[113];
 } struct_message;
 
 
@@ -431,48 +429,39 @@ void setup() {
 
 
 void sendData(int screenIndex, std::vector<std::vector<byte>> dataToSend) {
-  uint part = 0;
-  uint nbRowSent = 0;
   struct_message toSend;
   toSend.color[0] = colorToDisplay[0];
   toSend.color[1] = colorToDisplay[1];
   toSend.color[2] = colorToDisplay[2];
   Serial.println("Color to send : R=" + String(toSend.color[0]) + " G=" + String(toSend.color[1]) + " B=" + String(toSend.color[2]));
-  std::vector<uint8_t> byteArray;
+  std::vector<uint8_t> bitArray;
   for (const auto& row : dataToSend) {
     for (const auto& pixel : row) {
-      byteArray.push_back(pixel);
-    }
-    nbRowSent++;
-    if (nbRowSent == 8) {
-      for (const auto& val : byteArray) {
-        toSend.pixels[&val - &byteArray[0]] = val;
-      }
-      toSend.index = part;
-      part++;
-      toSend.nbRows = nbRowSent;
-      while (!sendChunkAndWait(broadcastAddress[screenIndex-1], (uint8_t *) &toSend, sizeof(toSend))) {
-
-        delay(10);
-      }
-      nbRowSent = 0;
-      byteArray.clear();
+      bitArray.push_back(pixel);
     }
   }
-
-  for (const auto& val : byteArray) {
-    toSend.pixels[&val - &byteArray[0]] = val;
+  std::vector<uint8_t> byteArray;
+  bitsToBytes(bitArray, byteArray);
+  for (size_t i = 0; i < byteArray.size() && i < sizeof(toSend.pixelsAsBytes); i++) {
+    toSend.pixelsAsBytes[i] = byteArray[i];
   }
-  toSend.index = part;
-  part++;
-  toSend.nbRows = nbRowSent;
   while (!sendChunkAndWait(broadcastAddress[screenIndex-1], (uint8_t *) &toSend, sizeof(toSend))) {
-    // Serial.println("Retrying...");
     delay(10);
   }
-
-  nbRowSent = 0;
   byteArray.clear();
+}
+
+
+void bitsToBytes(const std::vector<uint8_t>& byteArray, std::vector<byte>& bitArray) {
+  bitArray.clear();
+  for (size_t i = 0; i < byteArray.size(); i += 8) {
+    byte b = 0;
+    for (size_t j = 0; j < 8 && (i + j) < byteArray.size(); ++j) {
+      b <<= 1;
+      b |= (byteArray[i + j] & 0x01);
+    }
+    bitArray.push_back(b);
+  }
 }
 
 void slideRight() {
