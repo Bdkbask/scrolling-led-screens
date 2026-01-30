@@ -66,14 +66,11 @@ for target_character in ALL_CHARS:
             # Map grayscale values (0=Black, 255=White) to Binary (1=Black, 0=White)
             binary_row = []
             for value in row_pixels:
-                # If the value is close to black (0), map it to 1
-                # Since Terminus is a bitmap font, this threshold is generous
                 if value < 100: 
                     binary_row.append('1') # Foreground/ON
                 else:
                     binary_row.append('0') # Background/OFF
                     
-            # Join the 0s and 1s into a string separated by spaces
             row_values = "".join(binary_row)
             file_content.append(row_values)
         

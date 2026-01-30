@@ -97,7 +97,6 @@ def index():
                 newColor = True
 
 
-        # Here you can add code to handle the message, e.g., send it to the LED display
     initial_hex = '#%02x%02x%02x' % textColor
     return render_template('index.html', current_color=initial_hex)
 
